@@ -1,6 +1,6 @@
 # NFT to TON Swapper
 
-This repository contains a FunC smart contract skeleton that will allow users to swap batches of non-winning Lotshot NFTs for a fixed TON reward.
+This repository contains a FunC smart contract skeleton that allows users to swap batches of Lotshot NFTs for a fixed TON reward.
 
 ## Development
 

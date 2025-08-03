@@ -8,7 +8,6 @@ export type JetConfig = {
   reward5: bigint;
   reward10: bigint;
   reward20: bigint;
-  servicePubKey: Buffer;
 };
 
 export function jetConfigToCell(config: JetConfig): Cell {
@@ -17,7 +16,6 @@ export function jetConfigToCell(config: JetConfig): Cell {
     .storeCoins(config.reward5)
     .storeCoins(config.reward10)
     .storeCoins(config.reward20)
-    .storeBuffer(config.servicePubKey)
     .endCell();
 }
 
@@ -46,11 +44,10 @@ export class JetClient implements Contract {
     });
   }
 
-  async sendRedeem(provider: ContractProvider, via: Sender, opts: { signature: Buffer; nfts: Address[]; value?: bigint }) {
+  async sendRedeem(provider: ContractProvider, via: Sender, opts: { nfts: Address[]; value?: bigint }) {
     const value = opts.value ?? toNano('0.05');
     const body = beginCell()
       .storeUint(OP_REDEEM, 32)
-      .storeBuffer(opts.signature)
       .storeUint(opts.nfts.length, 8);
     for (const nft of opts.nfts) {
       body.storeAddress(nft);
@@ -70,7 +67,6 @@ export class JetClient implements Contract {
       reward5: cs.loadCoins(),
       reward10: cs.loadCoins(),
       reward20: cs.loadCoins(),
-      servicePubKey: cs.loadBuffer(32),
     };
   }
 }
@@ -106,7 +102,6 @@ export async function redeem(
   wallet: WalletContractV4,
   secretKey: Buffer,
   jet: JetClient,
-  signature: Buffer,
   nfts: Address[],
   value: bigint = toNano('0.05'),
 ): Promise<void> {
@@ -114,7 +109,6 @@ export async function redeem(
   const seqno = await walletContract.getSeqno();
   const body = beginCell()
     .storeUint(OP_REDEEM, 32)
-    .storeBuffer(signature)
     .storeUint(nfts.length, 8);
   for (const nft of nfts) {
     body.storeAddress(nft);
@@ -138,6 +132,5 @@ export async function readState(client: TonClient, address: Address): Promise<Je
     reward5: cs.loadCoins(),
     reward10: cs.loadCoins(),
     reward20: cs.loadCoins(),
-    servicePubKey: cs.loadBuffer(32),
   };
 }

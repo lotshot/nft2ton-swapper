@@ -1,7 +1,7 @@
 {
   "name": "Jet",
   "version": "0.0.1",
-  "description": "FunC smart contract skeleton for exchanging non-winning NFTs for TON.",
+  "description": "FunC smart contract skeleton for exchanging NFTs for TON.",
   "license": "MIT",
   "main": "client/JetClient.ts",
   "types": "client/JetClient.ts",
