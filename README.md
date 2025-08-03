@@ -32,6 +32,18 @@ Environment variables:
 - `REWARD5`, `REWARD10`, `REWARD20` – TON rewards for 5, 10 and 20 NFTs
 - `TON_ENDPOINT` and `TON_API_KEY` – optional RPC endpoint settings
 
+## Frontend
+
+A minimal Vite + React interface lives in `frontend/`. It connects to a TON wallet using [ton-connect](https://github.com/ton-connect/sdk), reads Jet contract state with `JetClient` and `tonweb`, and can be started locally with:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+From the repository root you can also run `npm run dev` which proxies to the same command.
+
 ## Project Structure
 
 - `contracts/jet.fc` – FunC contract skeleton

@@ -11,7 +11,8 @@
   "scripts": {
     "start": "blueprint run",
     "test": "node --require ts-node/register --test tests/*.test.ts",
-    "deploy": "ts-node scripts/deploy.ts"
+    "deploy": "ts-node scripts/deploy.ts",
+    "dev": "npm --prefix frontend run dev"
   },
   "dependencies": {
     "ton": "^13.9.0",
