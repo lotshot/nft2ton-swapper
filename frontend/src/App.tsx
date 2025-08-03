@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
 import { TonConnectButton, useTonAddress } from '@tonconnect/ui-react';
 import TonWeb from 'tonweb';
-import { TonClient } from 'ton';
-import { Address } from 'ton-core';
-import { readState } from '../../client/JetClient';
-import type { JetConfig } from '../../client/JetClient';
+import { Address, Cell } from 'ton-core';
+import { SWAP_CONTRACT } from './config';
 import './App.css';
 
 const tonweb = new TonWeb(new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC'));
-const contract = Address.parse('EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c');
+const contract = Address.parse(SWAP_CONTRACT);
+
+type JetConfig = {
+  collection: Address;
+  reward5: bigint;
+  reward10: bigint;
+  reward20: bigint;
+};
 
 export default function App() {
   const walletAddress = useTonAddress();
@@ -25,9 +30,19 @@ export default function App() {
   const loadState = async () => {
     try {
       setError(null);
-      const client = new TonClient({ endpoint: 'https://toncenter.com/api/v2/jsonRPC' });
-      const state = await readState(client, contract);
-      setConfig(state);
+      const info = await tonweb.provider.getAddressInfo(contract.toString());
+      const data = info.state?.data;
+      if (!data) {
+        throw new Error('No state found');
+      }
+      const cell = Cell.fromBoc(TonWeb.utils.base64ToBytes(data))[0];
+      const cs = cell.beginParse();
+      setConfig({
+        collection: cs.loadAddress(),
+        reward5: cs.loadCoins(),
+        reward10: cs.loadCoins(),
+        reward20: cs.loadCoins(),
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
