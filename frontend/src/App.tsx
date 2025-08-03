@@ -6,6 +6,8 @@ import { Buffer } from 'buffer';
 import { SWAP_CONTRACT } from './config';
 import './App.css';
 
+if (!window.Buffer) window.Buffer = Buffer;
+
 const tonweb = new TonWeb(new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC'));
 
 type JetConfig = {
