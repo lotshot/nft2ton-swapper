@@ -2,6 +2,17 @@
 
 React + TypeScript + Vite setup used for the NFT to TON swapper demo.
 
+## Configuration
+
+Copy `.env.example` to `.env` and fill in the contract addresses:
+
+```bash
+cp .env.example .env
+```
+
+Set `VITE_SWAP_CONTRACT` to the Jet contract address and `VITE_NFT_CONTRACT` to
+the NFT collection address.
+
 ## Development
 
 ```bash
