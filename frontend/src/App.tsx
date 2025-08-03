@@ -3,7 +3,8 @@ import { TonConnectButton, useTonAddress } from '@tonconnect/ui-react';
 import TonWeb from 'tonweb';
 import { TonClient } from 'ton';
 import { Address } from 'ton-core';
-import { JetConfig, readState } from '../../client/JetClient';
+import { readState } from '../../client/JetClient';
+import type { JetConfig } from '../../client/JetClient';
 
 const tonweb = new TonWeb(new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC'));
 const contract = Address.parse('EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c');
