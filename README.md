@@ -37,6 +37,21 @@ Environment variables:
 - `contracts/jet.fc` – FunC contract skeleton
 - `package.json` – npm scripts and dependencies
 
+## Client Library
+
+The `JetClient` module exposes helper functions for interacting with the contract.
+It uses [`ton-core`](https://github.com/ton-community/ton-core) for message
+serialization and is exported as the package's main entry.
+
+```ts
+import { JetClient, deploy, redeem, readState } from 'Jet';
+```
+
+- `deploy(client, wallet, secretKey, config, code)` – deploy the contract.
+- `redeem(client, wallet, secretKey, jet, signature, nfts)` – redeem a list of
+  NFT addresses for the configured reward.
+- `readState(client, address)` – fetch on-chain configuration of the contract.
+
 ## License
 
 MIT
