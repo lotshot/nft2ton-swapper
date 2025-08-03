@@ -73,6 +73,16 @@ export class JetClient implements Contract {
   }
 }
 
+/**
+ * Deploys a Jet contract instance to the blockchain.
+ *
+ * @param client TON client used to send the deploy transaction
+ * @param wallet Wallet that signs the deployment
+ * @param secretKey Secret key of the wallet
+ * @param config On-chain configuration of the Jet contract
+ * @param code Compiled contract code cell
+ * @param value Amount of TON to send with the deploy message
+ */
 export async function deploy(
   client: TonClient,
   wallet: WalletContractV4,
@@ -99,6 +109,16 @@ export async function deploy(
   return jet;
 }
 
+/**
+ * Redeems a batch of NFTs for the configured TON reward.
+ *
+ * @param client TON client used to send the transaction
+ * @param wallet Wallet that signs the message
+ * @param secretKey Secret key of the wallet
+ * @param jet Instance of the deployed Jet contract
+ * @param nfts Array of NFT addresses being redeemed
+ * @param value Amount of TON to send along with the message
+ */
 export async function redeem(
   client: TonClient,
   wallet: WalletContractV4,
@@ -124,6 +144,12 @@ export async function redeem(
   });
 }
 
+/**
+ * Reads on-chain configuration of a Jet contract.
+ *
+ * @param client TON client used for the query
+ * @param address Address of the contract to inspect
+ */
 export async function readState(client: TonClient, address: Address): Promise<JetConfig> {
   const state = await client.getContractState(address);
   if (!state.data) throw new Error('No state found');

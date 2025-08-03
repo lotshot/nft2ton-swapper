@@ -47,8 +47,8 @@ serialization and is exported as the package's main entry.
 import { JetClient, deploy, redeem, readState } from 'Jet';
 ```
 
-- `deploy(client, wallet, secretKey, config, code)` – deploy the contract.
-- `redeem(client, wallet, secretKey, jet, signature, nfts)` – redeem a list of
+- `deploy(client, wallet, secretKey, config, code, value?)` – deploy the contract.
+- `redeem(client, wallet, secretKey, jet, nfts, value?)` – redeem a list of
   NFT addresses for the configured reward.
 - `readState(client, address)` – fetch on-chain configuration of the contract.
 
