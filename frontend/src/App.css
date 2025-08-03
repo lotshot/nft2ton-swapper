@@ -1,13 +1,16 @@
 .app-container {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 1.5rem;
   width: 100%;
-  background: #1f2937;
-  border-radius: 8px;
+  max-width: 600px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .app-container h1 {

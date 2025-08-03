@@ -84,6 +84,10 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    loadState();
+  }, []);
+
   const swap = async () => {
     try {
       setError(null);
@@ -146,9 +150,6 @@ export default function App() {
           </div>
         </>
       )}
-      <button className="action" onClick={loadState}>
-        Load contract state
-      </button>
       {error && <p className="error">{error}</p>}
       {config && <pre className="config">{JSON.stringify(config, null, 2)}</pre>}
     </div>
