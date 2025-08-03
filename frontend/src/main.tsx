@@ -4,10 +4,13 @@ import { createRoot } from 'react-dom/client';
 import { TonConnectUIProvider } from '@tonconnect/ui-react';
 import './index.css';
 import App from './App.tsx';
+import { SITE_DOMAIN } from './config';
+
+const manifestUrl = `https://${SITE_DOMAIN}/tonconnect-manifest.json`;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <TonConnectUIProvider manifestUrl="/tonconnect-manifest.json">
+    <TonConnectUIProvider manifestUrl={manifestUrl}>
       <App />
     </TonConnectUIProvider>
   </StrictMode>,

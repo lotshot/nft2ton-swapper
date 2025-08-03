@@ -4,3 +4,5 @@ export const TONCENTER_URL =
   import.meta.env.VITE_TONCENTER_URL ?? 'https://toncenter.com/api/v2/jsonRPC';
 export const TON_API_URL =
   import.meta.env.VITE_TON_API_URL ?? 'https://tonapi.io/v2';
+export const SITE_DOMAIN =
+  import.meta.env.VITE_SITE_DOMAIN ?? 'nft2ton.onrender.com';
