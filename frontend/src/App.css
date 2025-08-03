@@ -1,0 +1,38 @@
+.app-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: #1f2937;
+  border-radius: 8px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.app-container h1 {
+  margin-bottom: 1rem;
+  font-size: 1.75rem;
+}
+
+.status {
+  margin: 1rem 0;
+}
+
+.action {
+  margin-top: 1rem;
+}
+
+.error {
+  margin-top: 1rem;
+  color: #f87171;
+}
+
+.config {
+  text-align: left;
+  margin-top: 1rem;
+  background: #111827;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
