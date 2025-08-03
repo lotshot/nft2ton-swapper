@@ -8,9 +8,10 @@ async function main() {
   const reward5 = process.env.REWARD5 || '0';
   const reward10 = process.env.REWARD10 || '0';
   const reward20 = process.env.REWARD20 || '0';
+  const servicePubKey = process.env.SERVICE_PUBKEY;
 
-  if (!seed || !collection) {
-    throw new Error('Environment variables SEED and COLLECTION_ADDRESS must be provided');
+  if (!seed || !collection || !servicePubKey) {
+    throw new Error('Environment variables SEED, COLLECTION_ADDRESS and SERVICE_PUBKEY must be provided');
   }
 
   const endpoint = process.env.TON_ENDPOINT ?? 'https://testnet.toncenter.com/api/v2/jsonRPC';
@@ -28,6 +29,7 @@ async function main() {
     .storeCoins(toNano(reward5))
     .storeCoins(toNano(reward10))
     .storeCoins(toNano(reward20))
+    .storeBuffer(Buffer.from(servicePubKey, 'hex'))
     .endCell();
 
   const init = { code, data };
