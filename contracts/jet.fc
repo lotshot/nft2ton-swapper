@@ -1,0 +1,10 @@
+;; Jet contract skeleton in FunC
+#include "stdlib.fc"
+
+() recv_internal(int msg_value, cell in_msg, slice in_msg_body) {
+    ;; TODO: handle internal messages
+}
+
+() recv_external(slice in_msg_body) {
+    ;; TODO: handle external messages
+}
