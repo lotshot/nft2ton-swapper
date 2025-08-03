@@ -1,0 +1,13 @@
+diff --git a/node_modules/@ton-community/blueprint/dist/network/send/TonConnectProvider.js b/node_modules/@ton-community/blueprint/dist/network/send/TonConnectProvider.js
+index 6b9f358..883c723 100644
+--- a/node_modules/@ton-community/blueprint/dist/network/send/TonConnectProvider.js
++++ b/node_modules/@ton-community/blueprint/dist/network/send/TonConnectProvider.js
+@@ -44,7 +44,7 @@ class TonConnectProvider {
+         _TonConnectProvider_ui.set(this, void 0);
+         __classPrivateFieldSet(this, _TonConnectProvider_connector, new sdk_1.default({
+             storage: new TonConnectStorage(storage),
+-            manifestUrl: 'https://raw.githubusercontent.com/ton-defi-org/tonconnect-manifest-temp/main/tonconnect-manifest.json',
++            manifestUrl: 'https://raw.githubusercontent.com/ton-connect/demo-dapp-with-react-ui/master/public/tonconnect-manifest.json',
+         }), "f");
+         __classPrivateFieldSet(this, _TonConnectProvider_ui, ui, "f");
+     }
