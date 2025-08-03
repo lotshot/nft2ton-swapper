@@ -2,9 +2,11 @@ import { Address, Cell, beginCell, contractAddress, toNano } from 'ton-core';
 import type { Contract, ContractProvider, Sender } from 'ton-core';
 import { TonClient, WalletContractV4, internal } from 'ton';
 
-export const OP_REDEEM = 0x72656465; // "redeem" prefix
+export const OP_REDEEM = 0x72656465; // "rede" prefix
+export const OP_WITHDRAW = 0x77697468; // "with" prefix
 
 export type JetConfig = {
+  admin: Address;
   collection: Address;
   reward5: bigint;
   reward10: bigint;
@@ -13,6 +15,7 @@ export type JetConfig = {
 
 export function jetConfigToCell(config: JetConfig): Cell {
   return beginCell()
+    .storeAddress(config.admin)
     .storeAddress(config.collection)
     .storeCoins(config.reward5)
     .storeCoins(config.reward10)
@@ -59,6 +62,18 @@ export class JetClient implements Contract {
     });
   }
 
+  async sendWithdraw(provider: ContractProvider, via: Sender, opts: { amount: bigint; value?: bigint }) {
+    const value = opts.value ?? toNano('0.05');
+    const body = beginCell()
+      .storeUint(OP_WITHDRAW, 32)
+      .storeCoins(opts.amount)
+      .endCell();
+    await provider.internal(via, {
+      value,
+      body,
+    });
+  }
+
   async getState(provider: ContractProvider): Promise<JetConfig> {
     const state = await provider.getState();
     if (state.state.type !== 'active' || !state.state.data) {
@@ -66,6 +81,7 @@ export class JetClient implements Contract {
     }
     const cs = Cell.fromBoc(state.state.data)[0].beginParse();
     return {
+      admin: cs.loadAddress(),
       collection: cs.loadAddress(),
       reward5: cs.loadCoins(),
       reward10: cs.loadCoins(),
@@ -146,6 +162,30 @@ export async function redeem(
 }
 
 /**
+ * Withdraws TON from the contract to the admin wallet.
+ */
+export async function withdraw(
+  client: TonClient,
+  wallet: WalletContractV4,
+  secretKey: Buffer,
+  jet: JetClient,
+  amount: bigint,
+  value: bigint = toNano('0.05'),
+): Promise<void> {
+  const walletContract = client.open(wallet);
+  const seqno = await walletContract.getSeqno();
+  const body = beginCell()
+    .storeUint(OP_WITHDRAW, 32)
+    .storeCoins(amount)
+    .endCell();
+  await walletContract.sendTransfer({
+    secretKey,
+    seqno,
+    messages: [internal({ to: jet.address, value, body })],
+  });
+}
+
+/**
  * Reads on-chain configuration of a Jet contract.
  *
  * @param client TON client used for the query
@@ -157,6 +197,7 @@ export async function readState(client: TonClient, address: Address): Promise<Je
   const data = Cell.fromBoc(state.data)[0];
   const cs = data.beginParse();
   return {
+    admin: cs.loadAddress(),
     collection: cs.loadAddress(),
     reward5: cs.loadCoins(),
     reward10: cs.loadCoins(),
