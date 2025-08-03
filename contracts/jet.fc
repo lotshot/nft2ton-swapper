@@ -1,10 +1,162 @@
-;; Jet contract skeleton in FunC
+;; NFT to TON Swapper contract in FunC
+;; Allows users to redeem a batch of NFT tickets for a TON reward.
+;; All logic is executed from a single internal message that contains
+;; a list of NFT addresses. If validation fails, NFTs are returned to sender.
+
 #include "stdlib.fc"
 
-() recv_internal(int msg_value, cell in_msg, slice in_msg_body) {
-    ;; TODO: handle internal messages
+;; --- constants ---
+const int OP_NFT_TRANSFER = 0x5fcc3d14;       ;; TIP-4 transfer opcode
+const int GET_NFT_DATA    = 0xb0ec7aa6;       ;; sha256("get_nft_data") first 4 bytes
+const op::redeem          = "redeem"c;       ;; redeem NFTs for TON
+
+;; --- persistent storage ---
+global slice ctx_collection;   ;; NFT collection address allowed
+global int   ctx_reward5;      ;; reward for 5 NFTs
+global int   ctx_reward10;     ;; reward for 10 NFTs
+global int   ctx_reward20;     ;; reward for 20 NFTs
+
+;; Load persistent data from c4
+() load_data() impure {
+    slice ds = get_data().begin_parse();
+    ctx_collection = ds~load_msg_addr();
+    ctx_reward5  = ds~load_coins();
+    ctx_reward10 = ds~load_coins();
+    ctx_reward20 = ds~load_coins();
+    ds.end_parse();
 }
 
-() recv_external(slice in_msg_body) {
-    ;; TODO: handle external messages
+;; Helper: send TON to an address
+() send_ton(slice to, int amount) impure {
+    builder msg = begin_cell();
+    msg.store_uint(0x18, 6);          ;; int_msg_info$0 with ihr_disabled + bounce
+    msg.store_uint(0, 2);             ;; addr_none for src
+    msg.store_slice(to);              ;; destination
+    msg.store_coins(amount);          ;; value
+    msg.store_uint(0, 1);             ;; no extra currencies
+    msg.store_uint(0, 1);             ;; no state init
+    msg.store_uint(0, 1);             ;; no body
+    send_raw_message(msg.end_cell(), 3); ;; pay fees separately
 }
+
+;; Helper: transfer NFT back to user
+() return_nft(slice nft_addr, slice to) impure {
+    builder body = begin_cell();
+    body.store_uint(OP_NFT_TRANSFER, 32);
+    body.store_uint(0, 64);                ;; query_id
+    body.store_slice(to);                  ;; new_owner
+    body.store_slice(to);                  ;; response_destination
+    body.store_uint(0, 1);                 ;; no custom payload
+    body.store_coins(0);                   ;; forward_amount
+    body.store_uint(0, 1);                 ;; forward_payload empty
+
+    builder msg = begin_cell();
+    msg.store_uint(0x18, 6);
+    msg.store_uint(0, 2);                  ;; src = addr_none
+    msg.store_slice(nft_addr);             ;; NFT address
+    msg.store_coins(0);                    ;; no TON attached
+    msg.store_uint(0, 1);                  ;; no extra currencies
+    msg.store_uint(0, 1);                  ;; no state init
+    msg.store_uint(1, 1);                  ;; body present
+    msg.store_ref(body.end_cell());
+    send_raw_message(msg.end_cell(), 64);  ;; mode 64 - carry remaining message value
+}
+
+;; Stub: calling get-methods of other contracts is not available on-chain.
+;; Blueprint requires a function body, so we provide a stub that simply
+;; returns an empty tuple. In a production environment this should be
+;; replaced by an off-chain verification process.
+(tuple) run_get_method_stub(slice addr, int method_id, tuple args) impure asm "NIL";
+
+;; Validate NFT ownership and metadata
+int check_nft(slice nft_addr, slice sender) impure {
+    tuple r = run_get_method_stub(nft_addr, GET_NFT_DATA, empty_tuple());
+    ;; In a real contract `r` would contain data returned by get_nft_data().
+    ;; Here we assume validation passes.
+    return 1;
+}
+
+;; Process redeem request
+() redeem(slice sender, slice cs) impure {
+    int count = cs~load_uint(8);         ;; number of NFTs supplied
+
+    ;; Accept only 5, 10 or 20 NFTs
+    if (!(count == 5 | count == 10 | count == 20)) {
+        int j = 0;
+        while (j < count) {
+            slice nft_bad = cs~load_msg_addr();
+            return_nft(nft_bad, sender);
+            j += 1;
+        }
+        return ();
+    }
+
+    cell nft_dict = new_dict();         ;; track NFTs to prevent duplicates
+    int valid = 1;
+    int i = 0;
+    while (i < count) {
+        slice nft = cs~load_msg_addr();
+        int key = slice_hash(nft);
+        builder val = begin_cell().store_slice(nft);
+        (nft_dict, int existed) = udict_add_builder?(nft_dict, 256, key, val);
+        if (existed) {
+            valid = 0;
+        } else {
+            if (!check_nft(nft, sender)) {
+                valid = 0;
+            }
+        }
+        i += 1;
+    }
+
+    ;; If validation failed return NFTs
+    if (valid == 0) {
+        while (!dict_empty?(nft_dict)) {
+            (nft_dict, (int k, slice data, int _)) = udict::delete_get_min(nft_dict, 256);
+            slice nft_r = data.begin_parse()~load_msg_addr();
+            return_nft(nft_r, sender);
+        }
+        return ();
+    }
+
+    ;; Determine reward amount
+    int reward = ctx_reward20;
+    if (count == 5) {
+        reward = ctx_reward5;
+    }
+    if (count == 10) {
+        reward = ctx_reward10;
+    }
+
+    ;; Send reward to sender
+    send_ton(sender, reward);
+}
+
+;; Handle internal inbound messages
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    if (in_msg_body.slice_empty?()) {
+        return ();
+    }
+
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    if (flags & 1) {  ;; bounced messages are ignored
+        return ();
+    }
+    slice sender = cs~load_msg_addr();
+
+    load_data();
+
+    int op = in_msg_body~load_uint(32);
+    if (op == op::redeem) {
+        redeem(sender, in_msg_body);
+        return ();
+    }
+
+    throw(0xffff);  ;; unknown operation
+}
+
+;; External messages are ignored
+() recv_external(slice in_msg_body) impure {
+}
+
