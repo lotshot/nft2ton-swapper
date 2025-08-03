@@ -3,7 +3,7 @@
 ;; All logic is executed from a single internal message that contains
 ;; a list of NFT addresses. If validation fails, NFTs are returned to sender.
 
-#include "stdlib.fc"
+;; stdlib is concatenated during compilation
 ;; --- constants ---
 const int OP_NFT_TRANSFER = 0x5fcc3d14;       ;; TIP-4 transfer opcode
 const op::redeem          = "redeem"c;       ;; redeem NFTs for TON
@@ -78,7 +78,7 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
     cell nft_dict = new_dict();         ;; track NFTs to prevent duplicates
     int valid = 1;
     int i = 0;
-    int existed;
+    int existed = 0;
     while (i < count) {
         slice nft = cs~load_msg_addr();
         int key = slice_hash(nft);
@@ -92,10 +92,10 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
 
     ;; If validation failed return NFTs
     if (valid == 0) {
-        int k; slice data; int unused;
-        while (!dict_empty?(nft_dict)) {
-            (nft_dict, (k, data, unused)) = udict::delete_get_min(nft_dict, 256);
-            slice nft_r = data.begin_parse()~load_msg_addr();
+        int k = 0; slice data = null(); int unused = 0;
+        while (~(dict_empty?(nft_dict))) {
+            (nft_dict, (k, data, unused)) = ~udict::delete_get_min(nft_dict, 256);
+            slice nft_r = data~load_msg_addr();
             return_nft(nft_r, sender);
         }
         return ();

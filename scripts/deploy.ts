@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { compileFunc } from '@ton-community/func-js';
 import { readFileSync } from 'fs';
 import { Address, Cell, toNano } from 'ton-core';
@@ -6,16 +7,20 @@ import { JetClient } from '../client/JetClient';
 
 export async function run(provider: NetworkProvider) {
   const ui = provider.ui();
+  const collectionEnv = process.env.COLLECTION_ADDRESS;
+  if (!collectionEnv) {
+    throw new Error('COLLECTION_ADDRESS env not set');
+  }
 
-  const collection = Address.parse(await ui.input('Collection address'));
-  const reward5 = toNano((await ui.input('Reward for 5 NFTs in TON (default 0):')) || '0');
-  const reward10 = toNano((await ui.input('Reward for 10 NFTs in TON (default 0):')) || '0');
-  const reward20 = toNano((await ui.input('Reward for 20 NFTs in TON (default 0):')) || '0');
+  const collection = Address.parse(collectionEnv);
+  const reward5 = toNano(process.env.REWARD5 || '0');
+  const reward10 = toNano(process.env.REWARD10 || '0');
+  const reward20 = toNano(process.env.REWARD20 || '0');
 
   const result = await compileFunc({
-    targets: ['main.fc'],
+    targets: ['jet.fc'],
     sources: {
-      'main.fc':
+      'jet.fc':
         readFileSync('contracts/stdlib.fc', 'utf8') +
         '\n' +
         readFileSync('contracts/jet.fc', 'utf8'),
