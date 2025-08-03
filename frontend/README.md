@@ -11,7 +11,8 @@ cp .env.example .env
 ```
 
 Set `VITE_SWAP_CONTRACT` to the Jet contract address and `VITE_NFT_CONTRACT` to
-the NFT collection address.
+the NFT collection address. You can also override the TonCenter endpoint with
+`VITE_TONCENTER_URL` and the NFT lookup API with `VITE_TON_API_URL`.
 
 ## Development
 

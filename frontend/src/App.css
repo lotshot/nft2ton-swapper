@@ -2,6 +2,7 @@
   max-width: 600px;
   margin: 2rem auto;
   padding: 1.5rem;
+  width: 100%;
   background: #1f2937;
   border-radius: 8px;
   text-align: center;
@@ -35,6 +36,7 @@
   border-radius: 4px;
   background: #111827;
   color: #fff;
+  flex: 1;
 }
 
 .error {
@@ -49,5 +51,32 @@
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
+}
+
+.nft-info {
+  margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .app-container h1 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .swap-form {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .swap-form input {
+    max-width: 200px;
+  }
 }
 
