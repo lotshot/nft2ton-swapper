@@ -12,6 +12,8 @@ export async function run(provider: NetworkProvider) {
     throw new Error('COLLECTION_ADDRESS env not set');
   }
 
+  const adminEnv = process.env.ADMIN_ADDRESS ?? collectionEnv;
+  const admin = Address.parse(adminEnv);
   const collection = Address.parse(collectionEnv);
   const reward5 = toNano(process.env.REWARD5 || '0');
   const reward10 = toNano(process.env.REWARD10 || '0');
@@ -36,6 +38,7 @@ export async function run(provider: NetworkProvider) {
   const jet = provider.open(
     JetClient.createFromConfig(
       {
+        admin,
         collection,
         reward5,
         reward10,

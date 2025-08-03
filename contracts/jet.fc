@@ -7,8 +7,10 @@
 ;; --- constants ---
 const int OP_NFT_TRANSFER = 0x5fcc3d14;       ;; TIP-4 transfer opcode
 const op::redeem          = "redeem"c;       ;; redeem NFTs for TON
+const op::withdraw        = "withdraw"c;     ;; withdraw TON
 
 ;; --- persistent storage ---
+global slice ctx_admin;        ;; admin allowed to withdraw
 global slice ctx_collection;   ;; NFT collection address allowed
 global int   ctx_reward5;      ;; reward for 5 NFTs
 global int   ctx_reward10;     ;; reward for 10 NFTs
@@ -17,6 +19,7 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
 ;; Load persistent data from c4
 () load_data() impure {
     slice ds = get_data().begin_parse();
+    ctx_admin     = ds~load_msg_addr();
     ctx_collection = ds~load_msg_addr();
     ctx_reward5  = ds~load_coins();
     ctx_reward10 = ds~load_coins();
@@ -58,6 +61,16 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
     msg.store_uint(1, 1);                  ;; body present
     msg.store_ref(body.end_cell());
     send_raw_message(msg.end_cell(), 64);  ;; mode 64 - carry remaining message value
+}
+
+;; Process withdraw request
+() withdraw(slice sender, slice cs) impure {
+    if (slice_hash(sender) != slice_hash(ctx_admin)) {
+        return ();
+    }
+    accept_message();
+    int amount = cs~load_coins();
+    send_ton(sender, amount);
 }
 
 ;; Process redeem request
@@ -130,6 +143,10 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
     load_data();
 
     int op = in_msg_body~load_uint(32);
+    if (op == op::withdraw) {
+        withdraw(sender, in_msg_body);
+        return ();
+    }
     if (op == op::redeem) {
         redeem(sender, in_msg_body);
         return ();
