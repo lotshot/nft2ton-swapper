@@ -3,10 +3,19 @@
   "version": "0.0.1",
   "description": "FunC smart contract skeleton for exchanging non-winning NFTs for TON.",
   "license": "MIT",
+  "main": "client/JetClient.ts",
+  "types": "client/JetClient.ts",
+  "exports": {
+    ".": "./client/JetClient.ts"
+  },
   "scripts": {
     "start": "blueprint run",
     "test": "echo \"No tests\"",
     "deploy": "ts-node scripts/deploy.ts"
+  },
+  "dependencies": {
+    "ton": "^13.9.0",
+    "ton-core": "^0.53.0"
   },
   "devDependencies": {
     "@ton-community/blueprint": "^0.12.0"
