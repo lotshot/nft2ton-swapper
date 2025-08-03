@@ -105,8 +105,9 @@ global int   ctx_service_pk;   ;; public key of off-chain verifier
 
     ;; If validation failed return NFTs
     if (valid == 0) {
+        int k; slice data; int unused;
         while (!dict_empty?(nft_dict)) {
-            (nft_dict, (int k, slice data, int _)) = udict::delete_get_min(nft_dict, 256);
+            (nft_dict, (k, data, unused)) = udict::delete_get_min(nft_dict, 256);
             slice nft_r = data.begin_parse()~load_msg_addr();
             return_nft(nft_r, sender);
         }
