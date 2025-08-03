@@ -14,7 +14,6 @@ global slice ctx_collection;   ;; NFT collection address allowed
 global int   ctx_reward5;      ;; reward for 5 NFTs
 global int   ctx_reward10;     ;; reward for 10 NFTs
 global int   ctx_reward20;     ;; reward for 20 NFTs
-global int   ctx_service_pk;   ;; public key of off-chain verifier
 
 ;; Load persistent data from c4
 () load_data() impure {
@@ -23,7 +22,6 @@ global int   ctx_service_pk;   ;; public key of off-chain verifier
     ctx_reward5  = ds~load_coins();
     ctx_reward10 = ds~load_coins();
     ctx_reward20 = ds~load_coins();
-    ctx_service_pk = ds~load_uint(256);
     ds.end_parse();
 }
 
@@ -65,8 +63,6 @@ global int   ctx_service_pk;   ;; public key of off-chain verifier
 
 ;; Process redeem request
 () redeem(slice sender, slice cs) impure {
-    slice signature;
-    (signature, cs) = load_bits(cs, 512);   ;; off-chain verifier signature
     int count = cs~load_uint(8);           ;; number of NFTs supplied
 
     ;; Accept only 5, 10 or 20 NFTs
@@ -81,14 +77,10 @@ global int   ctx_service_pk;   ;; public key of off-chain verifier
     }
 
     cell nft_dict = new_dict();         ;; track NFTs to prevent duplicates
-    builder to_sign = begin_cell();     ;; data signed by verifier
-    to_sign.store_slice(sender);
-    to_sign.store_uint(count, 8);
     int valid = 1;
     int i = 0;
     while (i < count) {
         slice nft = cs~load_msg_addr();
-        to_sign.store_slice(nft);
         int key = slice_hash(nft);
         builder val = begin_cell().store_slice(nft);
         (nft_dict, int existed) = udict_add_builder?(nft_dict, 256, key, val);
@@ -96,11 +88,6 @@ global int   ctx_service_pk;   ;; public key of off-chain verifier
             valid = 0;
         }
         i += 1;
-    }
-
-    slice data_signed = to_sign.end_cell().begin_parse();
-    if (check_data_signature(data_signed, signature, ctx_service_pk) != -1) {
-        valid = 0;
     }
 
     ;; If validation failed return NFTs

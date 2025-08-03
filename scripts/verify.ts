@@ -1,5 +1,4 @@
-import { Address, TonClient, beginCell } from 'ton';
-import { sign, sha256_sync } from 'ton-crypto';
+import { Address, TonClient } from 'ton';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -11,10 +10,9 @@ async function main() {
   const owner = args[0];
   const nfts = args.slice(1);
   const collection = process.env.COLLECTION_ADDRESS;
-  const secretKey = process.env.SERVICE_SECRET_KEY;
 
-  if (!collection || !secretKey) {
-    throw new Error('Environment variables COLLECTION_ADDRESS and SERVICE_SECRET_KEY must be provided');
+  if (!collection) {
+    throw new Error('Environment variable COLLECTION_ADDRESS must be provided');
   }
 
   const endpoint = process.env.TON_ENDPOINT ?? 'https://testnet.toncenter.com/api/v2/jsonRPC';
@@ -41,16 +39,7 @@ async function main() {
     }
   }
 
-  const toSign = beginCell()
-    .storeAddress(Address.parse(owner))
-    .storeUint(nfts.length, 8);
-  for (const nft of nfts) {
-    toSign.storeAddress(Address.parse(nft));
-  }
-  const message = toSign.endCell().toBoc();
-  const hash = sha256_sync(message);
-  const signature = sign(hash, Buffer.from(secretKey, 'hex'));
-  console.log(signature.toString('hex'));
+  console.log('All NFTs valid');
 }
 
 main();
