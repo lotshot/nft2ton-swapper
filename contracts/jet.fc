@@ -79,11 +79,12 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
     cell nft_dict = new_dict();         ;; track NFTs to prevent duplicates
     int valid = 1;
     int i = 0;
+    int existed;
     while (i < count) {
         slice nft = cs~load_msg_addr();
         int key = slice_hash(nft);
         builder val = begin_cell().store_slice(nft);
-        (nft_dict, int existed) = udict_add_builder?(nft_dict, 256, key, val);
+        (nft_dict, existed) = udict_add_builder?(nft_dict, 256, key, val);
         if (existed) {
             valid = 0;
         }
