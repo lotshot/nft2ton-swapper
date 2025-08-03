@@ -86,12 +86,13 @@ global int   ctx_service_pk;   ;; public key of off-chain verifier
     to_sign.store_uint(count, 8);
     int valid = 1;
     int i = 0;
+    int existed;
     while (i < count) {
         slice nft = cs~load_msg_addr();
         to_sign.store_slice(nft);
         int key = slice_hash(nft);
         builder val = begin_cell().store_slice(nft);
-        (nft_dict, int existed) = udict_add_builder?(nft_dict, 256, key, val);
+        (nft_dict, existed) = udict_add_builder?(nft_dict, 256, key, val);
         if (existed) {
             valid = 0;
         }
