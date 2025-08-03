@@ -41,7 +41,7 @@ export class JetClient implements Contract {
       value,
       bounce: false,
       init: this.init,
-    });
+    } as any);
   }
 
   async sendRedeem(provider: ContractProvider, via: Sender, opts: { nfts: Address[]; value?: bigint }) {
@@ -60,8 +60,10 @@ export class JetClient implements Contract {
 
   async getState(provider: ContractProvider): Promise<JetConfig> {
     const state = await provider.getState();
-    if (!state.data) throw new Error('No state data');
-    const cs = state.data.beginParse();
+    if (state.state.type !== 'active' || !state.state.data) {
+      throw new Error('No state data');
+    }
+    const cs = Cell.fromBoc(state.state.data)[0].beginParse();
     return {
       collection: cs.loadAddress(),
       reward5: cs.loadCoins(),
@@ -85,14 +87,14 @@ export async function deploy(
   await walletContract.sendTransfer({
     secretKey,
     seqno,
-    messages: [
-      internal({
-        to: jet.address,
-        value,
-        bounce: false,
-        init: jet.init,
-      }),
-    ],
+      messages: [
+        internal({
+          to: jet.address,
+          value,
+          bounce: false,
+          init: jet.init,
+        } as any),
+      ],
   });
   return jet;
 }
