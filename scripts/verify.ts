@@ -27,7 +27,7 @@ export async function verifyNfts(
   }
 }
 
-async function main() {
+export async function run() {
   const args = process.argv.slice(2);
   if (args.length < 2) {
     console.log('Usage: ts-node scripts/verify.ts <owner> <nft1> [nft2 ...]');
@@ -51,7 +51,8 @@ async function main() {
   console.log('All NFTs valid');
 }
 
-// Execute main only when run as a script
+// Execute run only when invoked directly, allowing blueprint to import the script
 if (typeof require !== 'undefined' && require.main === module) {
-  main();
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  run();
 }

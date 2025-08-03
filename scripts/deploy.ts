@@ -1,10 +1,18 @@
 import { compileFunc } from '@ton-community/func-js';
 import { readFileSync } from 'fs';
-import { Address, beginCell, contractAddress, internal, toNano, TonClient, WalletContractV4 } from 'ton';
+import {
+  Address,
+  beginCell,
+  contractAddress,
+  internal,
+  toNano,
+  TonClient,
+  WalletContractV4,
+} from 'ton';
 import { Cell } from 'ton-core';
 import { mnemonicToWalletKey } from 'ton-crypto';
 
-async function main() {
+export async function run() {
   const seed = process.env.SEED;
   const collection = process.env.COLLECTION_ADDRESS;
   const reward5 = process.env.REWARD5 || '0';
@@ -65,4 +73,8 @@ async function main() {
   console.log(`Deploy request sent to ${address.toString()}`);
 }
 
-main();
+// Allow direct execution with `ts-node` while supporting blueprint's `run` command
+if (require.main === module) {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  run();
+}
