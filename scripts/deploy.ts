@@ -1,5 +1,7 @@
-import { compile } from '@ton-community/blueprint';
+import { compileFunc } from '@ton-community/func-js';
+import { readFileSync } from 'fs';
 import { Address, beginCell, contractAddress, internal, toNano, TonClient, WalletContractV4 } from 'ton';
+import { Cell } from 'ton-core';
 import { mnemonicToWalletKey } from 'ton-crypto';
 
 async function main() {
@@ -21,7 +23,19 @@ async function main() {
   const wallet = WalletContractV4.create({ publicKey: key.publicKey, workchain: 0 });
   const walletContract = client.open(wallet);
 
-  const code = await compile('contracts/jet.fc');
+  const result = await compileFunc({
+    targets: ['main.fc'],
+    sources: {
+      'main.fc':
+        readFileSync('contracts/stdlib.fc', 'utf8') +
+        '\n' +
+        readFileSync('contracts/jet.fc', 'utf8'),
+    },
+  });
+  if (result.status !== 'ok') {
+    throw new Error(result.message);
+  }
+  const code = Cell.fromBoc(Buffer.from(result.codeBoc, 'base64'))[0];
 
   const data = beginCell()
     .storeAddress(Address.parse(collection))

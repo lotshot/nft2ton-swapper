@@ -320,7 +320,7 @@ cell preload_ref(slice s) asm "PLDREF";
 ;; int preload_uint(slice s, int len) asm "PLDUX";
 
 ;;; Loads the first `0 ≤ len ≤ 1023` bits from slice [s] into a separate `slice s''`.
-(slice, slice) load_bits(slice s, int len) asm(s len -> 1 0) "LDSLICEX";
+;; (slice, slice) load_bits(slice s, int len) asm(s len -> 1 0) "LDSLICEX";
 
 ;;; Preloads the first `0 ≤ len ≤ 1023` bits from slice [s] into a separate `slice s''`.
 ;; slice preload_bits(slice s, int len) asm "PLDSLICEX";
