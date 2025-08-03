@@ -1,0 +1,13 @@
+{
+  "name": "Jet",
+  "version": "0.0.1",
+  "description": "FunC smart contract skeleton for exchanging non-winning NFTs for TON.",
+  "license": "MIT",
+  "scripts": {
+    "start": "blueprint run",
+    "test": "echo \"No tests\""
+  },
+  "devDependencies": {
+    "@ton-community/blueprint": "^0.12.0"
+  }
+}
