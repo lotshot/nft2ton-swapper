@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TonConnectButton, useTonAddress } from '@tonconnect/ui-react';
 import TonWeb from 'tonweb';
 import { Address, Cell } from 'ton-core';
+import { Buffer } from 'buffer';
 import { SWAP_CONTRACT } from './config';
 import './App.css';
 
@@ -35,7 +36,8 @@ export default function App() {
       if (!data) {
         throw new Error('No state found');
       }
-      const cell = Cell.fromBoc(TonWeb.utils.base64ToBytes(data))[0];
+      const boc = Buffer.from(TonWeb.utils.base64ToBytes(data));
+      const cell = Cell.fromBoc(boc)[0];
       const cs = cell.beginParse();
       setConfig({
         collection: cs.loadAddress(),
