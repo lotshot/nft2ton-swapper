@@ -1,27 +1,16 @@
 import { compileFunc } from '@ton-community/func-js';
 import { readFileSync } from 'fs';
-import { Address, beginCell, contractAddress, internal, toNano, TonClient, WalletContractV4 } from 'ton';
-import { Cell } from 'ton-core';
-import { mnemonicToWalletKey } from 'ton-crypto';
+import { Address, Cell, toNano } from 'ton-core';
+import { NetworkProvider } from '@ton-community/blueprint';
+import { JetClient } from '../client/JetClient';
 
-async function main() {
-  const seed = process.env.SEED;
-  const collection = process.env.COLLECTION_ADDRESS;
-  const reward5 = process.env.REWARD5 || '0';
-  const reward10 = process.env.REWARD10 || '0';
-  const reward20 = process.env.REWARD20 || '0';
+export async function run(provider: NetworkProvider) {
+  const ui = provider.ui();
 
-  if (!seed || !collection) {
-    throw new Error('Environment variables SEED and COLLECTION_ADDRESS must be provided');
-  }
-
-  const endpoint = process.env.TON_ENDPOINT ?? 'https://testnet.toncenter.com/api/v2/jsonRPC';
-  const apiKey = process.env.TON_API_KEY;
-  const client = new TonClient({ endpoint, apiKey });
-
-  const key = await mnemonicToWalletKey(seed.split(' '));
-  const wallet = WalletContractV4.create({ publicKey: key.publicKey, workchain: 0 });
-  const walletContract = client.open(wallet);
+  const collection = Address.parse(await ui.input('Collection address'));
+  const reward5 = toNano((await ui.input('Reward for 5 NFTs in TON (default 0):')) || '0');
+  const reward10 = toNano((await ui.input('Reward for 10 NFTs in TON (default 0):')) || '0');
+  const reward20 = toNano((await ui.input('Reward for 20 NFTs in TON (default 0):')) || '0');
 
   const result = await compileFunc({
     targets: ['main.fc'],
@@ -32,37 +21,26 @@ async function main() {
         readFileSync('contracts/jet.fc', 'utf8'),
     },
   });
+
   if (result.status !== 'ok') {
     throw new Error(result.message);
   }
+
   const code = Cell.fromBoc(Buffer.from(result.codeBoc, 'base64'))[0];
 
-  const data = beginCell()
-    .storeAddress(Address.parse(collection))
-    .storeCoins(toNano(reward5))
-    .storeCoins(toNano(reward10))
-    .storeCoins(toNano(reward20))
-    .endCell();
+  const jet = provider.open(
+    JetClient.createFromConfig(
+      {
+        collection,
+        reward5,
+        reward10,
+        reward20,
+      },
+      code,
+    ),
+  );
 
-  const init = { code, data };
-  const address = contractAddress(0, init);
-
-  const seqno = await walletContract.getSeqno();
-
-  await walletContract.sendTransfer({
-    secretKey: key.secretKey,
-    seqno,
-    messages: [
-      internal({
-        to: address,
-        value: toNano('0.05'),
-        bounce: false,
-        init,
-      }),
-    ],
-  });
-
-  console.log(`Deploy request sent to ${address.toString()}`);
+  await jet.sendDeploy(provider.sender());
+  await provider.waitForDeploy(jet.address);
+  ui.write(`Deploy request sent to ${jet.address.toString()}`);
 }
-
-main();
