@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { TonConnectButton, useTonAddress, useTonConnectUI } from '@tonconnect/ui-react';
 import TonWeb from 'tonweb';
-import { Address, Cell } from 'ton-core';
+import { Address, beginCell, Cell } from 'ton-core';
 import { Buffer } from 'buffer';
-import { SWAP_CONTRACT } from './config';
+import {
+  SWAP_CONTRACT,
+  NFT_CONTRACT,
+  TONCENTER_URL,
+  TON_API_URL,
+} from './config';
 import './App.css';
 
-const tonweb = new TonWeb(new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC'));
+const tonweb = new TonWeb(new TonWeb.HttpProvider(TONCENTER_URL));
+const OP_REDEEM = 0x72656465;
 
 type JetConfig = {
   collection: Address;
@@ -21,13 +27,30 @@ export default function App() {
   const [balance, setBalance] = useState<string>('');
   const [config, setConfig] = useState<JetConfig | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [amount, setAmount] = useState('');
-  const [nftAddress, setNftAddress] = useState('');
+  const [nfts, setNfts] = useState<string[]>([]);
+  const [count, setCount] = useState('1');
 
   useEffect(() => {
     if (walletAddress) {
       tonweb.provider.getBalance(walletAddress).then((b) => setBalance(b.toString()));
     }
+  }, [walletAddress]);
+
+  useEffect(() => {
+    const fetchNfts = async () => {
+      if (!walletAddress || !NFT_CONTRACT) return;
+      try {
+        const res = await fetch(
+          `${TON_API_URL}/accounts/${walletAddress}/nfts?collection=${NFT_CONTRACT}`,
+        );
+        const data = await res.json();
+        const items = (data.nft_items as { address: string }[] | undefined) ?? [];
+        setNfts(items.map((i) => i.address));
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchNfts();
   }, [walletAddress]);
 
   const loadState = async () => {
@@ -70,18 +93,28 @@ export default function App() {
       if (!SWAP_CONTRACT) {
         throw new Error('SWAP_CONTRACT is not defined');
       }
-      if (!nftAddress) {
-        throw new Error('NFT address is required');
+      const cnt = parseInt(count);
+      if (isNaN(cnt) || cnt <= 0) {
+        throw new Error('Select amount of NFTs');
       }
-      try {
-        Address.parse(nftAddress);
-      } catch {
-        throw new Error('Invalid NFT address');
+      if (cnt > nfts.length) {
+        throw new Error('Not enough NFTs');
       }
-      const amountNano = TonWeb.utils.toNano(amount || '0');
+      const bodyBuilder = beginCell().storeUint(OP_REDEEM, 32).storeUint(cnt, 8);
+      nfts.slice(0, cnt).forEach((addr) =>
+        bodyBuilder.storeAddress(Address.parse(addr)),
+      );
+      const payload = bodyBuilder.endCell().toBoc().toString('base64');
+
       await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 60,
-        messages: [{ address: SWAP_CONTRACT, amount: amountNano.toString() }],
+        messages: [
+          {
+            address: SWAP_CONTRACT,
+            amount: TonWeb.utils.toNano('0.05').toString(),
+            payload,
+          },
+        ],
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -93,26 +126,32 @@ export default function App() {
       <h1>NFT ↔ TON Swapper</h1>
       <TonConnectButton />
       {walletAddress && (
-        <p className="status">
-          Connected: {walletAddress} (balance: {balance})
-        </p>
+        <>
+          <p className="status">
+            Connected: {walletAddress} (balance: {balance})
+          </p>
+          <div className="nft-info">You have {nfts.length} NFTs available.</div>
+          <div className="swap-form">
+            <input
+              type="number"
+              min="1"
+              max={nfts.length}
+              value={count}
+              onChange={(e) => setCount(e.target.value)}
+              disabled={nfts.length === 0}
+            />
+            <button className="action" onClick={swap} disabled={nfts.length === 0}>
+              Swap
+            </button>
+          </div>
+        </>
       )}
-      <div className="swap-form">
-        <input
-          placeholder="NFT address"
-          value={nftAddress}
-          onChange={(e) => setNftAddress(e.target.value)}
-        />
-        <input
-          placeholder="TON amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <button className="action" onClick={swap}>Swap</button>
-      </div>
-      <button className="action" onClick={loadState}>Load contract state</button>
+      <button className="action" onClick={loadState}>
+        Load contract state
+      </button>
       {error && <p className="error">{error}</p>}
       {config && <pre className="config">{JSON.stringify(config, null, 2)}</pre>}
     </div>
   );
 }
+
