@@ -1,9 +1,7 @@
 import { Address, Cell, beginCell, contractAddress, toNano } from 'ton-core';
 import type { Contract, ContractProvider, Sender } from 'ton-core';
 import { TonClient, WalletContractV4, internal } from 'ton';
-
-export const OP_REDEEM = 0x72656465; // "rede" prefix
-export const OP_WITHDRAW = 0x77697468; // "with" prefix
+import { OP_REDEEM, OP_WITHDRAW } from '../opcodes';
 
 export type JetConfig = {
   admin: Address;
