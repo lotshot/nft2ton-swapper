@@ -1,28 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/satoshi');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  font-family: 'Inter', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+html {
+  font-family: 'Satoshi', 'Inter', sans-serif;
+  background: linear-gradient(180deg, #080f1d 0%, #0a111e 100%);
+  color: white;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 320px;
-  min-height: 100vh;
-  background: #3a0766;
-  background: linear-gradient(
-      180deg,
-      #1a0064,
-      #3f0e65 6.77%,
-      #1a022d 15.62%,
-      #0a0028 39.58%,
-      #080220 64.58%,
-      #350759 91.67%
-    )
-    fixed;
-  color: #fff;
+button.primary-glow {
+  background: #ecff19;
+  color: black;
+  font-weight: bold;
+  border-radius: 9999px;
+  box-shadow: 0 0 10px #ecff19, 0 0 40px #ecff19;
+  transition: transform 0.2s;
+}
+button.primary-glow:hover {
+  transform: scale(1.03);
 }
