@@ -76,39 +76,40 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
 ;; Process redeem request
 () redeem(slice sender, slice cs) impure {
     int count = cs~load_uint(8);           ;; number of NFTs supplied
+    cell dict_in = cs~load_dict();         ;; dictionary of NFTs keyed by index
 
-    ;; Accept only 5, 10 or 20 NFTs
-    if ((count != 5) & (count != 10) & (count != 20)) {
-        int j = 0;
-        while (j < count) {
-            slice nft_bad = cs~load_msg_addr();
-            return_nft(nft_bad, sender);
-            j += 1;
-        }
-        return ();
-    }
-
-    cell nft_dict = new_dict();         ;; track NFTs to prevent duplicates
+    cell nft_dict = new_dict();           ;; track NFTs to prevent duplicates
     int valid = 1;
     int i = 0;
     int existed = 0;
-    while (i < count) {
-        slice nft = cs~load_msg_addr();
-        int key = slice_hash(nft);
+    int key = 0; slice data = null(); int unused = 0;
+
+    while (~(dict_empty?(dict_in))) {
+        (dict_in, (key, data, unused)) = ~udict::delete_get_min(dict_in, 8);
+        slice nft = data~load_msg_addr();
+        int h = slice_hash(nft);
         builder val = begin_cell().store_slice(nft);
-        (nft_dict, existed) = udict_add_builder?(nft_dict, 256, key, val);
+        (nft_dict, existed) = udict_add_builder?(nft_dict, 256, h, val);
         if (existed) {
             valid = 0;
         }
         i += 1;
     }
 
+    ;; Ensure correct count and allowed batch sizes
+    if ((count != 5) & (count != 10) & (count != 20)) {
+        valid = 0;
+    }
+    if (i != count) {
+        valid = 0;
+    }
+
     ;; If validation failed return NFTs
     if (valid == 0) {
-        int k = 0; slice data = null(); int unused = 0;
+        int k = 0; slice data_r = null(); int unused_r = 0;
         while (~(dict_empty?(nft_dict))) {
-            (nft_dict, (k, data, unused)) = ~udict::delete_get_min(nft_dict, 256);
-            slice nft_r = data~load_msg_addr();
+            (nft_dict, (k, data_r, unused_r)) = ~udict::delete_get_min(nft_dict, 256);
+            slice nft_r = data_r~load_msg_addr();
             return_nft(nft_r, sender);
         }
         return ();
