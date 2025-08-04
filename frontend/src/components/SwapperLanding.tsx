@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TonConnectButton, useTonAddress, useTonConnectUI } from '@tonconnect/ui-react';
 import TonWeb from 'tonweb';
-import { Address, beginCell } from 'ton-core';
+import { Address, beginCell, Cell } from 'ton-core';
 import { SWAP_CONTRACT, NFT_CONTRACT, TON_API_URL } from '../config';
 const OP_REDEEM = 0x72656465;
 
@@ -10,6 +10,21 @@ const SWAP_OPTIONS = [
   { nfts: 10, reward: '1' },
   { nfts: 20, reward: '2.5' },
 ];
+
+function buildAddressList(addresses: string[]): Cell {
+  console.log('Building address list for', addresses.length, 'NFTs');
+  const build = (index: number): Cell => {
+    const builder = beginCell();
+    const address = addresses[index];
+    console.log('Adding NFT address', address);
+    builder.storeAddress(Address.parse(address));
+    if (index + 1 < addresses.length) {
+      builder.storeRef(build(index + 1));
+    }
+    return builder.endCell();
+  };
+  return build(0);
+}
 
 export default function SwapperLanding() {
   const walletAddress = useTonAddress();
@@ -52,11 +67,12 @@ export default function SwapperLanding() {
       if (selected > nfts.length) {
         throw new Error('Not enough NFTs');
       }
+      const selectedNfts = nfts.slice(0, selected);
+      console.log('Selected NFTs for swap:', selectedNfts);
       const bodyBuilder = beginCell().storeUint(OP_REDEEM, 32).storeUint(selected, 8);
-      nfts.slice(0, selected).forEach((addr) =>
-        bodyBuilder.storeAddress(Address.parse(addr)),
-      );
+      bodyBuilder.storeRef(buildAddressList(selectedNfts));
       const payload = bodyBuilder.endCell().toBoc().toString('base64');
+      console.log('Built payload', payload);
       await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 60,
         messages: [
@@ -68,6 +84,7 @@ export default function SwapperLanding() {
         ],
       });
     } catch (e) {
+      console.error('Swap failed', e);
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
