@@ -90,7 +90,7 @@ export default function SwapperLanding() {
         {walletAddress && (
           <div className="space-y-4">
             <p className="text-sm text-gray-200">
-              Eligible NFTs: {nfts.length} (Winning Amount = x0)
+              Eligible NFTs: {nfts.length}
             </p>
             <div className="flex justify-center gap-3">
               {SWAP_OPTIONS.map((opt) => (
