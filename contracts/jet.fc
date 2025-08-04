@@ -76,17 +76,17 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
 ;; Process redeem request
 () redeem(slice sender, slice cs) impure {
     int count = cs~load_uint(8);           ;; number of NFTs supplied
-    cell dict_in = cs~load_dict();         ;; dictionary of NFTs keyed by index
+    cell root = cs~load_ref();             ;; root cell with NFT addresses
+    accept_message();
 
     cell nft_dict = new_dict();           ;; track NFTs to prevent duplicates
     int valid = 1;
     int i = 0;
     int existed = 0;
-    int key = 0; slice data = null(); int unused = 0;
+    slice cur = root.begin_parse();
 
-    while (~(dict_empty?(dict_in))) {
-        (dict_in, (key, data, unused)) = ~udict::delete_get_min(dict_in, 8);
-        slice nft = data~load_msg_addr();
+    while (i < count) {
+        slice nft = cur~load_msg_addr();
         int h = slice_hash(nft);
         builder val = begin_cell().store_slice(nft);
         (nft_dict, existed) = udict_add_builder?(nft_dict, 256, h, val);
@@ -94,6 +94,19 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
             valid = 0;
         }
         i += 1;
+        if (i < count) {
+            if (slice_refs(cur) == 0) {
+                valid = 0;
+                i = count;
+            } else {
+                cell next = cur~load_ref();
+                cur = next.begin_parse();
+            }
+        } else {
+            if (slice_refs(cur) > 0) {
+                valid = 0;
+            }
+        }
     }
 
     ;; Ensure correct count and allowed batch sizes

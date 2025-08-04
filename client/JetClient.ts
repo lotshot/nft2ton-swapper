@@ -1,4 +1,4 @@
-import { Address, Cell, Dictionary, beginCell, contractAddress, toNano } from 'ton-core';
+import { Address, Cell, beginCell, contractAddress, toNano } from 'ton-core';
 import type { Contract, ContractProvider, Sender } from 'ton-core';
 import { TonClient, WalletContractV4, internal } from 'ton';
 
@@ -12,6 +12,18 @@ export type JetConfig = {
   reward10: bigint;
   reward20: bigint;
 };
+
+function serializeNftAddresses(nfts: Address[]): Cell {
+  const build = (index: number): Cell => {
+    const b = beginCell().storeAddress(nfts[index]);
+    console.log(`serialize cell ${index}: bits=${b.bits} refs=${b.refs}`);
+    if (index + 1 < nfts.length) {
+      b.storeRef(build(index + 1));
+    }
+    return b.endCell();
+  };
+  return build(0);
+}
 
 export function jetConfigToCell(config: JetConfig): Cell {
   return beginCell()
@@ -49,13 +61,15 @@ export class JetClient implements Contract {
   }
 
   async sendRedeem(provider: ContractProvider, via: Sender, opts: { nfts: Address[]; value?: bigint }) {
+    if (opts.nfts.length > 20) {
+      throw new Error('Up to 20 NFTs allowed in one swap');
+    }
     const value = opts.value ?? toNano('0.05');
-    const dict = Dictionary.empty(Dictionary.Keys.Uint(8), Dictionary.Values.Address());
-    opts.nfts.forEach((nft, i) => dict.set(i, nft));
+    const nftsCell = serializeNftAddresses(opts.nfts);
     const body = beginCell()
       .storeUint(OP_REDEEM, 32)
       .storeUint(opts.nfts.length, 8)
-      .storeDict(dict)
+      .storeRef(nftsCell)
       .endCell();
     await provider.internal(via, {
       value,
@@ -147,12 +161,14 @@ export async function redeem(
 ): Promise<void> {
   const walletContract = client.open(wallet);
   const seqno = await walletContract.getSeqno();
-  const dict = Dictionary.empty(Dictionary.Keys.Uint(8), Dictionary.Values.Address());
-  nfts.forEach((nft, i) => dict.set(i, nft));
+  if (nfts.length > 20) {
+    throw new Error('Up to 20 NFTs allowed in one swap');
+  }
+  const nftCell = serializeNftAddresses(nfts);
   const body = beginCell()
     .storeUint(OP_REDEEM, 32)
     .storeUint(nfts.length, 8)
-    .storeDict(dict)
+    .storeRef(nftCell)
     .endCell();
   await walletContract.sendTransfer({
     secretKey,
