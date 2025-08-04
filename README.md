@@ -81,6 +81,18 @@ import { JetClient, deploy, redeem, readState } from 'Jet';
   NFT addresses for the configured reward.
 - `readState(client, address)` – fetch on-chain configuration of the contract.
 
+### Redeem Message Format
+
+Redeem messages must follow a strict binary layout:
+
+1. a 32-bit ASCII prefix `'rede'`;
+2. an 8-bit unsigned integer with the NFT count;
+3. a reference to a root cell whose refs contain the NFT address cells.
+
+Manually assembling this structure is error-prone. The `JetClient.redeem`
+helper constructs a valid message body for a given list of NFT addresses to
+ensure correct payloads.
+
 ## License
 
 MIT
