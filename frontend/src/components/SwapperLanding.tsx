@@ -3,7 +3,7 @@ import { TonConnectButton, useTonAddress, useTonConnectUI } from '@tonconnect/ui
 import TonWeb from 'tonweb';
 import { Address, beginCell, Cell } from 'ton-core';
 import { SWAP_CONTRACT, NFT_CONTRACT, TON_API_URL } from '../config';
-const OP_REDEEM = 0x72656465;
+import { OP_REDEEM } from '../../../opcodes';
 
 const SWAP_OPTIONS = [
   { nfts: 5, reward: '0.3' },
