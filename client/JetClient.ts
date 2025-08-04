@@ -1,4 +1,4 @@
-import { Address, Cell, beginCell, contractAddress, toNano } from 'ton-core';
+import { Address, Cell, Dictionary, beginCell, contractAddress, toNano } from 'ton-core';
 import type { Contract, ContractProvider, Sender } from 'ton-core';
 import { TonClient, WalletContractV4, internal } from 'ton';
 
@@ -50,15 +50,16 @@ export class JetClient implements Contract {
 
   async sendRedeem(provider: ContractProvider, via: Sender, opts: { nfts: Address[]; value?: bigint }) {
     const value = opts.value ?? toNano('0.05');
+    const dict = Dictionary.empty(Dictionary.Keys.Uint(8), Dictionary.Values.Address());
+    opts.nfts.forEach((nft, i) => dict.set(i, nft));
     const body = beginCell()
       .storeUint(OP_REDEEM, 32)
-      .storeUint(opts.nfts.length, 8);
-    for (const nft of opts.nfts) {
-      body.storeAddress(nft);
-    }
+      .storeUint(opts.nfts.length, 8)
+      .storeDict(dict)
+      .endCell();
     await provider.internal(via, {
       value,
-      body: body.endCell(),
+      body,
     });
   }
 
@@ -146,17 +147,18 @@ export async function redeem(
 ): Promise<void> {
   const walletContract = client.open(wallet);
   const seqno = await walletContract.getSeqno();
+  const dict = Dictionary.empty(Dictionary.Keys.Uint(8), Dictionary.Values.Address());
+  nfts.forEach((nft, i) => dict.set(i, nft));
   const body = beginCell()
     .storeUint(OP_REDEEM, 32)
-    .storeUint(nfts.length, 8);
-  for (const nft of nfts) {
-    body.storeAddress(nft);
-  }
+    .storeUint(nfts.length, 8)
+    .storeDict(dict)
+    .endCell();
   await walletContract.sendTransfer({
     secretKey,
     seqno,
     messages: [
-      internal({ to: jet.address, value, body: body.endCell() }),
+      internal({ to: jet.address, value, body }),
     ],
   });
 }
