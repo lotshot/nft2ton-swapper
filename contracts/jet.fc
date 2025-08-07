@@ -60,7 +60,7 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
     msg.store_uint(0, 1);                  ;; no state init
     msg.store_uint(1, 1);                  ;; body present
     msg.store_ref(body.end_cell());
-    send_raw_message(msg.end_cell(), 64);  ;; mode 64 - carry remaining message value
+    send_raw_message(msg.end_cell(), 3);   ;; pay fees separately for zero-value transfer
 }
 
 ;; Process withdraw request
