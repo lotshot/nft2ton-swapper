@@ -55,6 +55,7 @@ export default function SwapperLanding() {
   }, [walletAddress]);
 
   const swap = async () => {
+    let payloadHex: string | undefined;
     try {
       setLoading(true);
       setError(null);
@@ -69,10 +70,16 @@ export default function SwapperLanding() {
       }
       const selectedNfts = nfts.slice(0, selected);
       console.log('Selected NFTs for swap:', selectedNfts);
-      const bodyBuilder = beginCell().storeUint(OP_REDEEM, 32).storeUint(selected, 8);
+      const queryId = BigInt(Date.now());
+      const bodyBuilder = beginCell()
+        .storeUint(OP_REDEEM, 32)
+        .storeUint(queryId, 64)
+        .storeUint(selected, 8);
       bodyBuilder.storeRef(buildAddressList(selectedNfts));
-      const payload = bodyBuilder.endCell().toBoc().toString('base64');
-      console.log('Built payload', payload);
+      const bodyCell = bodyBuilder.endCell();
+      const payload = bodyCell.toBoc().toString('base64');
+      payloadHex = bodyCell.toBoc().toString('hex');
+      console.log('Built payload', payloadHex);
       await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 60,
         messages: [
@@ -80,12 +87,30 @@ export default function SwapperLanding() {
             address: SWAP_CONTRACT,
             amount: TonWeb.utils.toNano('0.05').toString(),
             payload,
+            bounce: true,
           },
         ],
       });
+      const txRes = await fetch(
+        `${TON_API_URL}/accounts/${SWAP_CONTRACT}/transactions?limit=1`,
+      ).then((r) => r.json());
+      const tx = txRes?.transactions?.[0];
+      const exitCode =
+        tx?.description?.compute?.exit_code ?? tx?.compute?.exit_code ?? 0;
+      if (exitCode !== 0) {
+        console.error('Swap failed', {
+          exit_code: exitCode,
+          op: OP_REDEEM,
+          body: payloadHex,
+        });
+        setError('Swap failed: invalid payload format');
+      }
     } catch (e) {
       console.error('Swap failed', e);
-      setError(e instanceof Error ? e.message : String(e));
+      if (payloadHex) {
+        console.error('Swap failed', { op: OP_REDEEM, body: payloadHex });
+      }
+      setError('Swap failed: invalid payload format');
     } finally {
       setLoading(false);
     }

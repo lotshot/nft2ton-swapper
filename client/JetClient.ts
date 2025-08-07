@@ -58,33 +58,63 @@ export class JetClient implements Contract {
     } as any);
   }
 
-  async sendRedeem(provider: ContractProvider, via: Sender, opts: { nfts: Address[]; value?: bigint }) {
+  async sendRedeem(
+    provider: ContractProvider,
+    via: Sender,
+    opts: { nfts: Address[]; value?: bigint; queryId?: bigint },
+  ): Promise<any> {
     if (opts.nfts.length > 20) {
       throw new Error('Up to 20 NFTs allowed in one swap');
     }
     const value = opts.value ?? toNano('0.05');
+    const queryId = opts.queryId ?? 0n;
     const nftsCell = serializeNftAddresses(opts.nfts);
     const body = beginCell()
       .storeUint(OP_REDEEM, 32)
+      .storeUint(queryId, 64)
       .storeUint(opts.nfts.length, 8)
       .storeRef(nftsCell)
       .endCell();
-    await provider.internal(via, {
+    const res: any = await provider.internal(via, {
       value,
       body,
+      bounce: true,
     });
+    const exitCode = res?.transactions?.[res.transactions.length - 1]?.description?.computePhase?.exitCode;
+    if (exitCode !== undefined && exitCode !== 0) {
+      console.error('Redeem failed', {
+        exit_code: exitCode,
+        op: OP_REDEEM,
+        body: body.toBoc().toString('hex'),
+      });
+    }
+    return res;
   }
 
-  async sendWithdraw(provider: ContractProvider, via: Sender, opts: { amount: bigint; value?: bigint }) {
+  async sendWithdraw(
+    provider: ContractProvider,
+    via: Sender,
+    opts: { amount: bigint; value?: bigint },
+  ): Promise<any> {
     const value = opts.value ?? toNano('0.05');
     const body = beginCell()
       .storeUint(OP_WITHDRAW, 32)
       .storeCoins(opts.amount)
       .endCell();
-    await provider.internal(via, {
+    const res: any = await provider.internal(via, {
       value,
       body,
+      bounce: true,
     });
+    const exitCode = res?.transactions?.[res.transactions.length - 1]?.description?.computePhase?.exitCode;
+    if (exitCode !== undefined && exitCode !== 0) {
+      console.error('Withdraw failed', {
+        exit_code: exitCode,
+        op: OP_WITHDRAW,
+        body: body.toBoc().toString('hex'),
+      });
+    }
+    return res;
   }
 
   async getState(provider: ContractProvider): Promise<JetConfig> {
@@ -156,6 +186,7 @@ export async function redeem(
   jet: JetClient,
   nfts: Address[],
   value: bigint = toNano('0.05'),
+  queryId: bigint = 0n,
 ): Promise<void> {
   const walletContract = client.open(wallet);
   const seqno = await walletContract.getSeqno();
@@ -165,6 +196,7 @@ export async function redeem(
   const nftCell = serializeNftAddresses(nfts);
   const body = beginCell()
     .storeUint(OP_REDEEM, 32)
+    .storeUint(queryId, 64)
     .storeUint(nfts.length, 8)
     .storeRef(nftCell)
     .endCell();
@@ -172,7 +204,7 @@ export async function redeem(
     secretKey,
     seqno,
     messages: [
-      internal({ to: jet.address, value, body }),
+      internal({ to: jet.address, value, body, bounce: true }),
     ],
   });
 }
