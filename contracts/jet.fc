@@ -6,8 +6,8 @@
 ;; stdlib is concatenated during compilation
 ;; --- constants ---
 const int OP_NFT_TRANSFER = 0x5fcc3d14;       ;; TIP-4 transfer opcode
-const op::redeem          = "rede"c;         ;; 32-bit prefix for redeem NFTs
-const op::withdraw        = "with"c;         ;; 32-bit prefix for withdraw TON
+const int OP_REDEEM       = "rede"c;         ;; 32-bit prefix for redeem NFTs
+const int OP_WITHDRAW     = "with"c;         ;; 32-bit prefix for withdraw TON
 
 ;; --- persistent storage ---
 global slice ctx_admin;        ;; admin allowed to withdraw
@@ -158,11 +158,11 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
     load_data();
 
     int op = in_msg_body~load_uint(32);
-    if (op == op::withdraw) {
+    if (op == OP_WITHDRAW) {
         withdraw(sender, in_msg_body);
         return ();
     }
-    if (op == op::redeem) {
+    if (op == OP_REDEEM) {
         redeem(sender, in_msg_body);
         return ();
     }
