@@ -87,7 +87,6 @@ export default function SwapperLanding() {
             address: SWAP_CONTRACT,
             amount: TonWeb.utils.toNano('0.05').toString(),
             payload,
-            bounce: true,
           },
         ],
       });
