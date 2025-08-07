@@ -86,8 +86,9 @@ import { JetClient, deploy, redeem, readState } from 'Jet';
 Redeem messages must follow a strict binary layout:
 
 1. a 32-bit ASCII prefix `'rede'`;
-2. an 8-bit unsigned integer with the NFT count;
-3. a reference to a root cell whose refs contain the NFT address cells.
+2. a 64-bit unsigned `query_id` field;
+3. an 8-bit unsigned integer with the NFT count;
+4. a reference to a root cell whose refs contain the NFT address cells.
 
 Manually assembling this structure is error-prone. The `JetClient.redeem`
 helper constructs a valid message body for a given list of NFT addresses to

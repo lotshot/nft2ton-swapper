@@ -75,6 +75,7 @@ global int   ctx_reward20;     ;; reward for 20 NFTs
 
 ;; Process redeem request
 () redeem(slice sender, slice cs) impure {
+    int query_id = cs~load_uint(64);       ;; query_id of the request
     int count = cs~load_uint(8);           ;; number of NFTs supplied
     cell root = cs~load_ref();             ;; root cell with NFT addresses
     accept_message();
