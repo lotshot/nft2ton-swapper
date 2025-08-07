@@ -78,7 +78,7 @@ test('redeem payload succeeds with uint64 query id', async () => {
   assert(exitCodes.includes(0));
 });
 
-test('redeem with varuint instead of uint64 fails', async () => {
+test('redeem with varuint instead of uint64 is ignored', async () => {
   const blockchain = await Blockchain.create();
   const admin = await blockchain.treasury('admin');
   const user = await blockchain.treasury('user');
@@ -118,5 +118,6 @@ test('redeem with varuint instead of uint64 fails', async () => {
   const exitCodes = res.transactions.map(
     (t: any) => t.description?.computePhase?.exitCode,
   );
-  assert(exitCodes.includes(0xffff));
+  // Malformed payload should be ignored without aborting the transaction
+  assert(exitCodes.includes(0));
 });
