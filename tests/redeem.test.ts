@@ -73,9 +73,9 @@ test('redeem payload succeeds with uint64 query id', async () => {
     bounce: true,
   });
   const exitCodes = res.transactions.map(
-    (t: any) => t.description?.computePhase?.exitCode,
+    (t: any) => t.description?.computePhase?.exitCode ?? 0,
   );
-  assert(exitCodes.includes(0));
+  assert(exitCodes.every((code: any) => code === 0));
 });
 
 test('redeem with varuint instead of uint64 is ignored', async () => {
@@ -116,8 +116,8 @@ test('redeem with varuint instead of uint64 is ignored', async () => {
     bounce: true,
   });
   const exitCodes = res.transactions.map(
-    (t: any) => t.description?.computePhase?.exitCode,
+    (t: any) => t.description?.computePhase?.exitCode ?? 0,
   );
   // Malformed payload should be ignored without aborting the transaction
-  assert(exitCodes.includes(0));
+  assert(exitCodes.every((code: any) => code === 0));
 });

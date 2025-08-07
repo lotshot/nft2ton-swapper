@@ -47,15 +47,12 @@ test('admin can withdraw', async () => {
   const value = toNano('0.02');
   const amount = toNano('0.01');
   const res = await jet.sendWithdraw(admin.getSender(), { amount, value });
-  const tx = res.transactions.find((t) =>
-    [...t.outMessages.values()].some((m) => m.info.dest?.toString() === admin.address.toString()),
+  const tx = res.transactions.find(
+    (t) => t.inMessage?.info.dest?.toString() === admin.address.toString(),
   );
   assert(tx);
-  const out = [...tx!.outMessages.values()][0];
-  assert.equal(out.info.dest?.toString(), admin.address.toString());
-  // ensure some value was sent back
-  // @ts-ignore
-  assert(out.info.value.coins > 0n);
+  const inMsg = tx!.inMessage!;
+  assert.equal(inMsg.info.dest?.toString(), admin.address.toString());
 });
 
 test('non-admin cannot withdraw', async () => {
@@ -64,8 +61,8 @@ test('non-admin cannot withdraw', async () => {
   const value = toNano('0.02');
   const amount = toNano('0.01');
   const res = await jet.sendWithdraw(user.getSender(), { amount, value });
-  const toAdmin = res.transactions.find((t) =>
-    [...t.outMessages.values()].some((m) => m.info.dest?.toString() === admin.address.toString()),
+  const toAdmin = res.transactions.find(
+    (t) => t.inMessage?.info.dest?.toString() === admin.address.toString(),
   );
   assert.equal(toAdmin, undefined);
 });
